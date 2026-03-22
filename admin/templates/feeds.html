@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block title %}Feeds{% endblock %}
+{% block page_title %}Feed Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <span class="text-muted">{{ feeds|length }} feeds configured</span>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFeedModal">
+        <i class="fas fa-plus me-1"></i>Add Feed
+    </button>
+</div>
+
+<!-- Feeds Table -->
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Source Name</th>
+                        <th>URL</th>
+                        <th>Category</th>
+                        <th>Language</th>
+                        <th>State</th>
+                        <th>Status</th>
+                        <th>Last Fetch</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for feed in feeds %}
+                    <tr id="feed-row-{{ feed.id }}">
+                        <td class="fw-medium">{{ feed.name or 'Unnamed' }}</td>
+                        <td class="small text-muted" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ feed.url or '' }}
+                        </td>
+                        <td><span class="badge bg-secondary">{{ feed.category or 'N/A' }}</span></td>
+                        <td><span class="badge bg-info">{{ feed.language or 'en' }}</span></td>
+                        <td>{{ feed.state or 'N/A' }}</td>
+                        <td>
+                            {% if feed.active is false or feed.active == False %}
+                            <span class="status-badge status-error">Disabled</span>
+                            {% elif feed.error_count and feed.error_count > 2 %}
+                            <span class="status-badge status-error">Error ({{ feed.error_count }})</span>
+                            {% else %}
+                            <span class="status-badge status-active">Active</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ feed.last_fetch|timeago }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editFeed('{{ feed.id }}', {{ feed|tojson }})" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="testFeedUrl('{{ feed.url }}')" title="Test">
+                                    <i class="fas fa-vial"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteFeed('{{ feed.id }}', '{{ feed.name }}')" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="8" class="text-center text-muted py-4">No feeds configured. Add one to get started.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Test Results -->
+<div id="feedTestResults" class="card shadow-sm mt-4 d-none">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-semibold"><i class="fas fa-vial me-2"></i>Feed Test Results</h6>
+        <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('feedTestResults').classList.add('d-none')">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="card-body" id="feedTestBody"></div>
+</div>
+
+<!-- Add Feed Modal -->
+<div class="modal fade" id="addFeedModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_feed') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add New Feed</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Source Name</label>
+                        <input type="text" class="form-control" name="name" required placeholder="e.g. Times of India">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">RSS Feed URL</label>
+                        <div class="input-group">
+                            <input type="url" class="form-control" name="url" id="newFeedUrl" required placeholder="https://...">
+                            <button type="button" class="btn btn-outline-secondary" onclick="testFeedUrl(document.getElementById('newFeedUrl').value)">Test</button>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Category</label>
+                            <select class="form-select" name="category">
+                                <option value="general">General</option>
+                                <option value="politics">Politics</option>
+                                <option value="business">Business</option>
+                                <option value="technology">Technology</option>
+                                <option value="sports">Sports</option>
+                                <option value="entertainment">Entertainment</option>
+                                <option value="health">Health</option>
+                                <option value="science">Science</option>
+                                <option value="education">Education</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Language</label>
+                            <select class="form-select" name="language">
+                                <option value="en">English</option>
+                                <option value="hi">Hindi</option>
+                                <option value="ta">Tamil</option>
+                                <option value="te">Telugu</option>
+                                <option value="bn">Bengali</option>
+                                <option value="mr">Marathi</option>
+                                <option value="gu">Gujarati</option>
+                                <option value="kn">Kannada</option>
+                                <option value="ml">Malayalam</option>
+                                <option value="pa">Punjabi</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">State</label>
+                            <input type="text" class="form-control" name="state" placeholder="e.g. Maharashtra">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Add Feed</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Feed Modal -->
+<div class="modal fade" id="editFeedModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Feed</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editFeedId">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Source Name</label>
+                    <input type="text" class="form-control" id="editFeedName">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">RSS Feed URL</label>
+                    <input type="url" class="form-control" id="editFeedUrl">
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Category</label>
+                        <input type="text" class="form-control" id="editFeedCategory">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Language</label>
+                        <input type="text" class="form-control" id="editFeedLanguage">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">State</label>
+                        <input type="text" class="form-control" id="editFeedState">
+                    </div>
+                </div>
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="editFeedActive" checked>
+                    <label class="form-check-label" for="editFeedActive">Active</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveEditFeed()">
+                    <i class="fas fa-save me-1"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function editFeed(id, feed) {
+    document.getElementById('editFeedId').value = id;
+    document.getElementById('editFeedName').value = feed.name || '';
+    document.getElementById('editFeedUrl').value = feed.url || '';
+    document.getElementById('editFeedCategory').value = feed.category || '';
+    document.getElementById('editFeedLanguage').value = feed.language || 'en';
+    document.getElementById('editFeedState').value = feed.state || '';
+    document.getElementById('editFeedActive').checked = feed.active !== false;
+    new bootstrap.Modal(document.getElementById('editFeedModal')).show();
+}
+
+function saveEditFeed() {
+    const id = document.getElementById('editFeedId').value;
+    const data = {
+        name: document.getElementById('editFeedName').value,
+        url: document.getElementById('editFeedUrl').value,
+        category: document.getElementById('editFeedCategory').value,
+        language: document.getElementById('editFeedLanguage').value,
+        state: document.getElementById('editFeedState').value,
+        active: document.getElementById('editFeedActive').checked,
+    };
+    fetch(`/feeds/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data),
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.ok) {
+            showToast('Feed updated successfully.', 'success');
+            setTimeout(() => location.reload(), 800);
+        }
+    })
+    .catch(err => showToast('Error updating feed.', 'danger'));
+    bootstrap.Modal.getInstance(document.getElementById('editFeedModal')).hide();
+}
+
+function deleteFeed(id, name) {
+    if (!confirm(`Delete feed "${name}"? This cannot be undone.`)) return;
+    fetch(`/feeds/${id}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(res => {
+        if (res.ok) {
+            document.getElementById(`feed-row-${id}`).remove();
+            showToast('Feed deleted.', 'success');
+        }
+    })
+    .catch(err => showToast('Error deleting feed.', 'danger'));
+}
+
+function testFeedUrl(url) {
+    if (!url) { showToast('Enter a URL first.', 'warning'); return; }
+    const resultsDiv = document.getElementById('feedTestResults');
+    const bodyDiv = document.getElementById('feedTestBody');
+    resultsDiv.classList.remove('d-none');
+    bodyDiv.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Testing feed...</p></div>';
+
+    fetch('/feeds/test', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({url}),
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.ok) {
+            let html = `<p class="fw-semibold text-success"><i class="fas fa-check-circle me-1"></i>Feed: ${res.feed_title} (${res.entry_count} entries)</p>`;
+            html += '<table class="table table-sm"><thead><tr><th>Title</th><th>Published</th></tr></thead><tbody>';
+            res.sample_entries.forEach(e => {
+                html += `<tr><td><a href="${e.link}" target="_blank">${e.title}</a></td><td class="small text-muted">${e.published}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            bodyDiv.innerHTML = html;
+        } else {
+            bodyDiv.innerHTML = `<p class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>${res.error}</p>`;
+        }
+    })
+    .catch(err => {
+        bodyDiv.innerHTML = `<p class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Failed to test feed.</p>`;
+    });
+}
+</script>
+{% endblock %}

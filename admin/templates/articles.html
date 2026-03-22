@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Articles{% endblock %}
+{% block page_title %}Articles{% endblock %}
+
+{% block content %}
+<!-- Search & Filters -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('articles') }}" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search articles...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Category</label>
+                <select class="form-select" name="category">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {{ 'selected' if cat == current_category }}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Language</label>
+                <select class="form-select" name="language">
+                    <option value="">All Languages</option>
+                    {% for lang in languages %}
+                    <option value="{{ lang }}" {{ 'selected' if lang == current_language }}>{{ lang }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Status</label>
+                <select class="form-select" name="status">
+                    <option value="">All</option>
+                    <option value="flagged" {{ 'selected' if current_status == 'flagged' }}>Flagged</option>
+                    <option value="trending" {{ 'selected' if current_status == 'trending' }}>Trending</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results count -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <span class="text-muted">Showing {{ articles|length }} of {{ total }} articles</span>
+</div>
+
+<!-- Articles Table -->
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Source</th>
+                        <th>Category</th>
+                        <th>Language</th>
+                        <th>Published</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for article in articles %}
+                    <tr>
+                        <td class="fw-medium">
+                            <a href="{{ url_for('article_detail', article_id=article.id) }}" class="text-decoration-none text-dark">
+                                {{ article.title[:55] }}{% if (article.title or '')|length > 55 %}...{% endif %}
+                            </a>
+                            {% if article.trending %}<span class="badge bg-warning text-dark ms-1">Trending</span>{% endif %}
+                        </td>
+                        <td class="text-muted small">{{ article.source or 'Unknown' }}</td>
+                        <td><span class="badge bg-secondary">{{ article.category or 'N/A' }}</span></td>
+                        <td><span class="badge bg-info">{{ article.language or 'en' }}</span></td>
+                        <td class="text-muted small">{{ article.published_at|timeago }}</td>
+                        <td>
+                            {% if article.flagged %}
+                            <span class="status-badge status-flagged">Flagged</span>
+                            {% elif article.status == 'approved' %}
+                            <span class="status-badge status-active">Approved</span>
+                            {% elif article.status == 'rejected' %}
+                            <span class="status-badge status-error">Rejected</span>
+                            {% else %}
+                            <span class="status-badge status-active">Active</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('article_detail', article_id=article.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">No articles found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {{ 'disabled' if page <= 1 }}">
+            <a class="page-link" href="{{ url_for('articles', page=page-1, search=search, category=current_category, language=current_language, status=current_status) }}">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+        {% for p in range(1, total_pages + 1) %}
+        {% if p == page or (p <= 3) or (p >= total_pages - 2) or (p >= page - 1 and p <= page + 1) %}
+        <li class="page-item {{ 'active' if p == page }}">
+            <a class="page-link" href="{{ url_for('articles', page=p, search=search, category=current_category, language=current_language, status=current_status) }}">{{ p }}</a>
+        </li>
+        {% elif p == 4 or p == total_pages - 3 %}
+        <li class="page-item disabled"><span class="page-link">...</span></li>
+        {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if page >= total_pages }}">
+            <a class="page-link" href="{{ url_for('articles', page=page+1, search=search, category=current_category, language=current_language, status=current_status) }}">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

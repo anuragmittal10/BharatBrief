@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+backend/venv/
+backend/.env
+
+# Firebase service account (never commit)
+*firebase-adminsdk*.json
+*service-account*.json
+
+# Flutter
+bharat_brief/build/
+bharat_brief/.dart_tool/
+bharat_brief/.packages
+bharat_brief/.flutter-plugins
+bharat_brief/.flutter-plugins-dependencies
+bharat_brief/flutter_*.log
+bharat_brief/.metadata
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
+
+# Docs
+*.docx

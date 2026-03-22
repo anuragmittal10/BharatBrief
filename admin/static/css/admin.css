@@ -1,0 +1,299 @@
+/* ========================================================================
+   BharatBrief Admin Panel - Custom Styles
+   ======================================================================== */
+
+:root {
+    --sidebar-width: 260px;
+    --sidebar-bg: #1a1a2e;
+    --sidebar-hover: #16213e;
+    --sidebar-active: #0f3460;
+    --accent: #e94560;
+    --accent-hover: #c73652;
+    --topbar-height: 60px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* ---- Sidebar ---- */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: var(--sidebar-bg);
+    color: #fff;
+    z-index: 1000;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-brand {
+    padding: 1.25rem 1.5rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sidebar-brand i {
+    color: var(--accent);
+    font-size: 1.5rem;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0.5rem 0;
+    margin: 0;
+}
+
+.sidebar-nav li a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    color: rgba(255,255,255,0.65);
+    text-decoration: none;
+    font-size: 0.925rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav li a:hover {
+    background: var(--sidebar-hover);
+    color: #fff;
+    border-left-color: var(--accent);
+}
+
+.sidebar-nav li.active a {
+    background: var(--sidebar-active);
+    color: #fff;
+    border-left-color: var(--accent);
+}
+
+.sidebar-nav li a i {
+    width: 20px;
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+/* ---- Main content ---- */
+#main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
+
+/* ---- Top navbar ---- */
+.top-navbar {
+    height: var(--topbar-height);
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.sidebar-toggle {
+    font-size: 1.2rem;
+    color: #6c757d;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    display: none;
+}
+
+.navbar-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-left: 0.5rem;
+}
+
+.navbar-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+/* ---- Content area ---- */
+.content-area {
+    padding: 1.5rem;
+}
+
+.flash-messages {
+    margin-bottom: 1rem;
+}
+
+/* ---- Stat cards ---- */
+.stat-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+.stat-card-body {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+
+.stat-card-primary .stat-icon { background: rgba(59,130,246,0.12); color: #3b82f6; }
+.stat-card-success .stat-icon { background: rgba(16,185,129,0.12); color: #10b981; }
+.stat-card-warning .stat-icon { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.stat-card-info .stat-icon    { background: rgba(99,102,241,0.12); color: #6366f1; }
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    line-height: 1.1;
+}
+
+.stat-label {
+    font-size: 0.825rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-top: 0.15rem;
+}
+
+/* ---- Cards ---- */
+.card {
+    border: none;
+    border-radius: 12px;
+}
+
+.card-header {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem 1.25rem;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* ---- Tables ---- */
+.table th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    border-bottom-width: 1px;
+    padding: 0.85rem 1rem;
+    white-space: nowrap;
+}
+
+.table td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background: #f8f9ff;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+/* ---- Status badges ---- */
+.status-badge {
+    display: inline-block;
+    padding: 0.3em 0.75em;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.status-active  { background: #d1fae5; color: #065f46; }
+.status-error   { background: #fee2e2; color: #991b1b; }
+.status-flagged { background: #fef3c7; color: #92400e; }
+.status-info    { background: #dbeafe; color: #1e40af; }
+
+/* ---- Responsive ---- */
+@media (max-width: 991.98px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    #main-content {
+        margin-left: 0;
+    }
+    .sidebar-toggle {
+        display: block;
+    }
+}
+
+/* ---- Misc ---- */
+.font-monospace {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+/* Custom scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+}
+
+/* Chart container */
+canvas {
+    max-height: 250px;
+}
+
+/* Button consistency */
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.btn-primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+/* Audio player */
+audio {
+    border-radius: 8px;
+}
