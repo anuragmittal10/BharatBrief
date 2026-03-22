@@ -72,6 +72,11 @@ class _NewsCardState extends State<NewsCard>
     }
   }
 
+  String _formatDate(DateTime dt) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${dt.day} ${months[dt.month - 1]}';
+  }
+
   Color get _categoryColor {
     return AppTheme.categoryColors[widget.article.category] ?? AppTheme.saffron;
   }
@@ -242,9 +247,9 @@ class _NewsCardState extends State<NewsCard>
                 ),
               ),
               Text(
-                AppDateUtils.timeAgo(widget.article.publishedAt),
+                '${_formatDate(widget.article.publishedAt)}  •  ${AppDateUtils.timeAgo(widget.article.publishedAt)}',
                 style: GoogleFonts.poppins(
-                  fontSize: 11,
+                  fontSize: 10,
                   color: Colors.white.withOpacity(0.75),
                 ),
               ),
@@ -255,7 +260,7 @@ class _NewsCardState extends State<NewsCard>
         if (widget.article.isTrending)
           Positioned(
             top: 12,
-            left: 90,
+            right: 30,
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

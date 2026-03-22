@@ -70,7 +70,7 @@ class _SwipeFeedState extends State<SwipeFeed> {
           constraints: const BoxConstraints(maxWidth: 500),
           child: PageView.builder(
             controller: _pageController,
-            scrollDirection: Axis.vertical,
+            scrollDirection: Axis.horizontal,
             itemCount: itemCount,
             onPageChanged: (index) {
               setState(() {

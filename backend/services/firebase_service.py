@@ -254,13 +254,14 @@ def get_articles(language=None, category=None, state=None, limit=20, last_doc=No
     if _demo_mode:
         ensure_demo_seeded()
         articles = list(_mem_articles.values())
+        if language:
+            articles = [a for a in articles if a.get("language") == language]
         if category and category != "all":
             articles = [a for a in articles if a.get("category") == category]
         if state:
             state_filtered = [a for a in articles if a.get("state") == state]
             if state_filtered:
                 articles = state_filtered
-            # If no articles match the state, return all (demo data has no state)
         articles.sort(key=lambda a: a.get("published_at", datetime.min.replace(tzinfo=timezone.utc)), reverse=True)
         return articles[:limit], None
 
