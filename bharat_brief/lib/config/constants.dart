@@ -3,7 +3,7 @@ class AppConstants {
 
   // API Configuration
   // For macOS/iOS simulator: localhost. For Android emulator: 10.0.2.2. For physical device: your machine IP.
-  static const String apiBaseUrl = 'http://192.168.1.13:8000/api';
+  static const String apiBaseUrl = 'https://bharatbrief-production.up.railway.app/api';
   static const int apiTimeout = 15000;
   static const int articlesPerPage = 20;
 
