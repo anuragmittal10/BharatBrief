@@ -263,7 +263,11 @@ def get_articles(language=None, category=None, state=None, limit=20, last_doc=No
             if state_filtered:
                 articles = state_filtered
         articles.sort(key=lambda a: a.get("published_at", datetime.min.replace(tzinfo=timezone.utc)), reverse=True)
-        return articles[:limit], None
+        # Shuffle within recent articles so each open feels fresh
+        import random
+        recent = articles[:limit]
+        random.shuffle(recent)
+        return recent, None
 
     try:
         from firebase_admin import firestore

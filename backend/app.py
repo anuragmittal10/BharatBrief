@@ -105,10 +105,54 @@ def create_app():
         if old_ids:
             logger.info("Cleaned up %d old articles (>48h)", len(old_ids))
 
+    def _gemini_summarize(title, description):
+        """Use Gemini to generate a 60-word summary when RSS content is too short."""
+        import os
+        api_key = os.getenv("GEMINI_API_KEY", "")
+        if not api_key:
+            return None, None
+
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel("gemini-2.0-flash")
+
+            prompt = f"""You are a news summarizer for an Indian news app called BharatBrief.
+Given this news article title and description, write:
+1. A crisp headline (max 12 words)
+2. A neutral, informative summary (exactly 50-60 words)
+
+Title: {title}
+Description: {description or 'No description available'}
+
+Respond in this exact format (no markdown, no quotes):
+HEADLINE: <your headline>
+SUMMARY: <your 50-60 word summary>"""
+
+            response = model.generate_content(prompt)
+            text = response.text.strip()
+
+            headline = title
+            summary = ""
+            for line in text.split("\n"):
+                line = line.strip()
+                if line.upper().startswith("HEADLINE:"):
+                    headline = line.split(":", 1)[1].strip()
+                elif line.upper().startswith("SUMMARY:"):
+                    summary = line.split(":", 1)[1].strip()
+
+            if summary and len(summary.split()) >= 20:
+                return headline, summary
+        except Exception as e:
+            logger.warning("Gemini summarize failed for '%s': %s", title[:50], e)
+
+        return None, None
+
     def _fetch_rss_lightweight():
-        """Fetch RSS feeds and save articles directly using title/description as headline/summary."""
+        """Fetch RSS feeds, use Gemini to summarize short articles."""
         from services.rss_service import fetch_all_feeds, deduplicate, filter_old_articles
         from utils.helpers import truncate_text
+        import time as _time
 
         try:
             logger.info("=== Starting lightweight RSS fetch ===")
@@ -117,19 +161,30 @@ def create_app():
             articles = deduplicate(articles)
 
             saved = 0
+            gemini_used = 0
             for article in articles:
                 if firebase_service.article_exists(article["id"]):
                     continue
 
-                # Use RSS title/description directly (no Gemini needed)
-                headline = article.get("title", "")[:100]
-                summary = truncate_text(article.get("description", ""), word_count=60)
-                if not summary:
-                    summary = headline
+                title = article.get("title", "")
+                description = article.get("description", "")
+                headline = title[:100]
+                summary = truncate_text(description, word_count=60)
+
+                # If summary is too short (< 15 words), use Gemini
+                if not summary or len(summary.split()) < 15:
+                    ai_headline, ai_summary = _gemini_summarize(title, description)
+                    if ai_summary:
+                        headline = ai_headline or headline
+                        summary = ai_summary
+                        gemini_used += 1
+                        _time.sleep(0.3)  # Rate limit Gemini calls
+                    elif not summary:
+                        summary = title  # Last resort fallback
 
                 article_data = {
                     "id": article["id"],
-                    "title": article["title"],
+                    "title": title,
                     "source": article["source"],
                     "category": article["category"],
                     "state": article.get("state"),
@@ -147,7 +202,7 @@ def create_app():
                 firebase_service.save_article(article_data)
                 saved += 1
 
-            logger.info("=== Lightweight fetch complete. Saved %d new articles ===", saved)
+            logger.info("=== Fetch complete. Saved %d articles (%d Gemini-enhanced) ===", saved, gemini_used)
         except Exception as e:
             logger.error("Lightweight fetch error: %s", e)
 
