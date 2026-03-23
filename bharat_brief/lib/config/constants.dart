@@ -5,7 +5,7 @@ class AppConstants {
   // For macOS/iOS simulator: localhost. For Android emulator: 10.0.2.2. For physical device: your machine IP.
   static const String apiBaseUrl = 'https://bharatbrief-production.up.railway.app/api';
   static const int apiTimeout = 15000;
-  static const int articlesPerPage = 20;
+  static const int articlesPerPage = 50;
 
   // AdMob Test IDs (replace with real IDs before production)
   static const String adMobAppId = 'ca-app-pub-3940256099942544~3347511713';

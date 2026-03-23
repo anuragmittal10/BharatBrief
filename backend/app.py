@@ -217,13 +217,15 @@ SUMMARY: <your 50-60 word summary>"""
             language = request.args.get("lang", "en")
             category = request.args.get("category", "all")
             state = request.args.get("state")
-            limit = min(int(request.args.get("limit", 20)), 100)
+            page = int(request.args.get("page", 1)) - 1  # 0-indexed
+            limit = min(int(request.args.get("limit", 50)), 200)
 
             articles, _ = firebase_service.get_articles(
                 language=language,
                 category=category,
                 state=state,
                 limit=limit,
+                last_doc=str(page),
             )
 
             return jsonify({
