@@ -94,7 +94,7 @@ def create_app():
         if not _demo_mode:
             return
         from datetime import timedelta
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=48)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=168)  # 7 days
         old_ids = []
         for aid, article in _mem_articles.items():
             pub = article.get("published_at")
@@ -157,7 +157,7 @@ SUMMARY: <your 50-60 word summary>"""
         try:
             logger.info("=== Starting lightweight RSS fetch ===")
             articles = fetch_all_feeds()
-            articles = filter_old_articles(articles, max_age_hours=48)
+            articles = filter_old_articles(articles, max_age_hours=168)  # 7 days
             articles = deduplicate(articles)
 
             saved = 0
