@@ -33,19 +33,19 @@ def create_app():
     app.json = BharatBriefJSONProvider(app)
     CORS(app)
 
-    # Seed demo data and auto-fetch RSS on startup
-    from services.firebase_service import ensure_demo_seeded
-    ensure_demo_seeded()
-
-    _fetch_triggered = [False]
+    # Start recurring RSS fetch scheduler
+    _scheduler_started = [False]
 
     @app.before_request
-    def _auto_fetch_once():
-        if not _fetch_triggered[0]:
-            _fetch_triggered[0] = True
+    def _start_scheduler_once():
+        if not _scheduler_started[0]:
+            _scheduler_started[0] = True
             import threading
+            # Fetch immediately on first request
             threading.Thread(target=_fetch_rss_lightweight, daemon=True).start()
-            logger.info("Auto-triggered RSS fetch on first request")
+            # Start recurring fetch every 5 minutes
+            threading.Thread(target=_run_recurring_fetch, daemon=True).start()
+            logger.info("Started RSS fetch scheduler (every 5 min)")
 
     # ─── Error Handlers ─────────────────────────────────────────────────
 
@@ -77,6 +77,34 @@ def create_app():
         threading.Thread(target=_fetch_rss_lightweight, daemon=True).start()
         return jsonify({"success": True, "message": "Lightweight fetch triggered in background."})
 
+    def _run_recurring_fetch():
+        """Run RSS fetch every 5 minutes."""
+        import time as _time
+        while True:
+            _time.sleep(300)  # 5 minutes
+            try:
+                _fetch_rss_lightweight()
+                _cleanup_old_articles()
+            except Exception as e:
+                logger.error("Recurring fetch error: %s", e)
+
+    def _cleanup_old_articles():
+        """Remove articles older than 48 hours from in-memory store."""
+        from services.firebase_service import _mem_articles, _demo_mode
+        if not _demo_mode:
+            return
+        from datetime import timedelta
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=48)
+        old_ids = []
+        for aid, article in _mem_articles.items():
+            pub = article.get("published_at")
+            if pub and isinstance(pub, datetime) and pub < cutoff:
+                old_ids.append(aid)
+        for aid in old_ids:
+            del _mem_articles[aid]
+        if old_ids:
+            logger.info("Cleaned up %d old articles (>48h)", len(old_ids))
+
     def _fetch_rss_lightweight():
         """Fetch RSS feeds and save articles directly using title/description as headline/summary."""
         from services.rss_service import fetch_all_feeds, deduplicate, filter_old_articles
@@ -85,7 +113,7 @@ def create_app():
         try:
             logger.info("=== Starting lightweight RSS fetch ===")
             articles = fetch_all_feeds()
-            articles = filter_old_articles(articles, max_age_hours=72)
+            articles = filter_old_articles(articles, max_age_hours=48)
             articles = deduplicate(articles)
 
             saved = 0

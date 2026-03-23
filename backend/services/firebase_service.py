@@ -187,8 +187,8 @@ def is_demo_mode():
 
 
 def ensure_demo_seeded():
-    if _demo_mode and not _mem_articles:
-        _seed_demo_data()
+    """No longer seeds demo data — real RSS articles are fetched on startup."""
+    pass
 
 
 def _get_db():
