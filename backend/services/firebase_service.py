@@ -262,21 +262,13 @@ def get_articles(language=None, category=None, state=None, limit=20, last_doc=No
             state_filtered = [a for a in articles if a.get("state") == state]
             if state_filtered:
                 articles = state_filtered
-        # Sort newest first
-        articles.sort(key=lambda a: a.get("published_at", datetime.min.replace(tzinfo=timezone.utc)), reverse=True)
-        # Light shuffle: group into chunks of 5-6, shuffle within each chunk
-        # This keeps articles roughly time-ordered but with variety
+        # Full random shuffle so every open feels completely different
         import random
-        chunk_size = 6
-        shuffled = []
-        for i in range(0, len(articles), chunk_size):
-            chunk = articles[i:i + chunk_size]
-            random.shuffle(chunk)
-            shuffled.extend(chunk)
-        # Pagination: skip based on last_doc (used as page offset)
+        random.shuffle(articles)
+        # Pagination
         page = int(last_doc) if last_doc else 0
         start = page * limit
-        return shuffled[start:start + limit], None
+        return articles[start:start + limit], None
 
     try:
         from firebase_admin import firestore
