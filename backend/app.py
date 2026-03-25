@@ -33,6 +33,9 @@ def create_app():
     app.json = BharatBriefJSONProvider(app)
     CORS(app)
 
+    # Try to initialize Firebase for persistent storage
+    firebase_service.init_firebase()
+
     # Start recurring RSS fetch scheduler
     _scheduler_started = [False]
 

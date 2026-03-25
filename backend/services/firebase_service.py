@@ -157,14 +157,27 @@ def _seed_demo_data():
 
 # ─── Firebase Init ────────────────────────────────────────────────────────────
 
-def init_firebase(credentials_path):
-    """Initialize Firebase Admin SDK with a service account JSON file."""
+def init_firebase(credentials_path=None):
+    """Initialize Firebase Admin SDK with a service account JSON file or JSON env var."""
     global _db, _bucket, _demo_mode
     try:
+        import os
+        import json
         import firebase_admin
         from firebase_admin import credentials as fb_credentials, firestore, storage
 
-        cred = fb_credentials.Certificate(credentials_path)
+        # Try FIREBASE_CREDENTIALS_JSON env var first (for Railway/cloud deployments)
+        creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON", "")
+        if creds_json:
+            cred_dict = json.loads(creds_json)
+            cred = fb_credentials.Certificate(cred_dict)
+        elif credentials_path and os.path.exists(credentials_path):
+            cred = fb_credentials.Certificate(credentials_path)
+        else:
+            logger.info("No Firebase credentials found.")
+            _demo_mode = True
+            return False
+
         firebase_admin.initialize_app(cred, {
             "storageBucket": f"{cred.project_id}.appspot.com",
         })
@@ -176,9 +189,8 @@ def init_firebase(credentials_path):
         return True
     except Exception as e:
         logger.error("Failed to initialize Firebase: %s", e)
-        logger.info("Falling back to DEMO mode with sample data.")
+        logger.info("Falling back to DEMO mode.")
         _demo_mode = True
-        _seed_demo_data()
         return False
 
 
