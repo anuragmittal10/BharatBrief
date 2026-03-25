@@ -69,7 +69,12 @@ def create_app():
 
     @app.route("/api/health", methods=["GET"])
     def health_check():
-        return jsonify({"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()})
+        return jsonify({
+            "status": "ok",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "firebase": not firebase_service.is_demo_mode(),
+            "mode": "firestore" if not firebase_service.is_demo_mode() else "in-memory",
+        })
 
     # ─── Manual Trigger ──────────────────────────────────────────────────
 
