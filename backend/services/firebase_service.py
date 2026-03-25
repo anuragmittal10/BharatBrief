@@ -178,7 +178,14 @@ def init_firebase(credentials_path=None):
         logger.info("Firebase SDK imported successfully")
 
         if creds_json:
-            cred_dict = json.loads(creds_json)
+            # Railway may convert \n in private_key to actual newlines, breaking JSON
+            # Try parsing as-is first, then fix newlines if it fails
+            try:
+                cred_dict = json.loads(creds_json)
+            except json.JSONDecodeError:
+                # Replace actual newlines within the JSON string (not the \n escape sequences)
+                fixed = creds_json.replace('\n', '\\n')
+                cred_dict = json.loads(fixed)
             logger.info("Parsed credentials for project: %s", cred_dict.get("project_id"))
             cred = fb_credentials.Certificate(cred_dict)
         else:
