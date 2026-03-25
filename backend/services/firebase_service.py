@@ -160,23 +160,29 @@ def _seed_demo_data():
 def init_firebase(credentials_path=None):
     """Initialize Firebase Admin SDK with a service account JSON file or JSON env var."""
     global _db, _bucket, _demo_mode
+    import os
+    import json
+
+    # Try FIREBASE_CREDENTIALS_JSON env var first (for Railway/cloud deployments)
+    creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON", "")
+    logger.info("Firebase init: FIREBASE_CREDENTIALS_JSON present=%s, len=%d", bool(creds_json), len(creds_json))
+
+    if not creds_json and not (credentials_path and os.path.exists(str(credentials_path))):
+        logger.info("No Firebase credentials found. Running in DEMO mode.")
+        _demo_mode = True
+        return False
+
     try:
-        import os
-        import json
         import firebase_admin
         from firebase_admin import credentials as fb_credentials, firestore, storage
+        logger.info("Firebase SDK imported successfully")
 
-        # Try FIREBASE_CREDENTIALS_JSON env var first (for Railway/cloud deployments)
-        creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON", "")
         if creds_json:
             cred_dict = json.loads(creds_json)
+            logger.info("Parsed credentials for project: %s", cred_dict.get("project_id"))
             cred = fb_credentials.Certificate(cred_dict)
-        elif credentials_path and os.path.exists(credentials_path):
-            cred = fb_credentials.Certificate(credentials_path)
         else:
-            logger.info("No Firebase credentials found.")
-            _demo_mode = True
-            return False
+            cred = fb_credentials.Certificate(credentials_path)
 
         firebase_admin.initialize_app(cred, {
             "storageBucket": f"{cred.project_id}.appspot.com",
@@ -188,7 +194,8 @@ def init_firebase(credentials_path=None):
         logger.info("Firebase initialized successfully for project: %s", cred.project_id)
         return True
     except Exception as e:
-        logger.error("Failed to initialize Firebase: %s", e)
+        import traceback
+        logger.error("Failed to initialize Firebase: %s\n%s", e, traceback.format_exc())
         logger.info("Falling back to DEMO mode.")
         _demo_mode = True
         return False
