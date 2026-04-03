@@ -256,12 +256,17 @@ def save_article(article_data):
         if not article_id:
             logger.warning("Article data missing 'id' field, skipping save.")
             return None
+        # Convert datetime objects to ISO strings for Firestore compatibility
+        for key, val in article_data.items():
+            if isinstance(val, datetime):
+                article_data[key] = val.isoformat()
         article_data["saved_at"] = firestore.SERVER_TIMESTAMP
         db.collection("articles").document(article_id).set(article_data, merge=True)
         logger.debug("Saved article: %s", article_id)
         return article_id
     except Exception as e:
-        logger.error("Error saving article: %s", e)
+        import traceback
+        logger.error("Error saving article '%s': %s\n%s", article_data.get("id", "?"), e, traceback.format_exc())
         return None
 
 
