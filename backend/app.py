@@ -76,6 +76,38 @@ def create_app():
             "mode": "firestore" if not firebase_service.is_demo_mode() else "in-memory",
         })
 
+    @app.route("/api/debug-save", methods=["POST"])
+    def debug_save():
+        """Debug: save a test article to Firestore and read it back."""
+        try:
+            test_article = {
+                "id": "test-123",
+                "title": "Test Article",
+                "source": "Debug",
+                "category": "national",
+                "language": "en",
+                "state": None,
+                "image_url": None,
+                "original_link": "https://example.com",
+                "published_at": datetime.now(timezone.utc).isoformat(),
+                "summaries": {"en": {"headline": "Test", "summary": "This is a test article."}},
+                "tts_urls": {},
+                "is_trending": False,
+                "mood_tag": "neutral",
+            }
+            aid = firebase_service.save_article(test_article)
+            # Read it back
+            article = firebase_service.get_article_by_id("test-123")
+            return jsonify({
+                "saved_id": aid,
+                "read_back": bool(article),
+                "article": article,
+                "demo_mode": firebase_service.is_demo_mode(),
+            })
+        except Exception as e:
+            import traceback
+            return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
+
     # ─── Manual Trigger ──────────────────────────────────────────────────
 
     @app.route("/api/trigger-fetch", methods=["POST"])
