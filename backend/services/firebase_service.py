@@ -303,36 +303,37 @@ def get_articles(language=None, category=None, state=None, limit=20, last_doc=No
         return articles[start:start + limit], None
 
     try:
-        from firebase_admin import firestore
+        import random
         db = _get_db()
+        # Simple query without order_by to avoid needing composite indexes
         query = db.collection("articles")
 
         if language:
             query = query.where("language", "==", language)
         if category and category != "all":
             query = query.where("category", "==", category)
-        if state:
-            query = query.where("state", "==", state)
 
-        query = query.order_by("published_at", direction=firestore.Query.DESCENDING)
-
-        if last_doc:
-            query = query.start_after(last_doc)
-
-        query = query.limit(limit)
+        query = query.limit(limit * 3)  # Fetch extra for shuffle
         docs = query.stream()
 
         articles = []
-        last_snapshot = None
         for doc in docs:
             data = doc.to_dict()
             data["id"] = doc.id
             articles.append(data)
-            last_snapshot = doc
 
-        return articles, last_snapshot
+        # Filter by state in memory (avoids another composite index)
+        if state:
+            state_filtered = [a for a in articles if a.get("state") == state]
+            if state_filtered:
+                articles = state_filtered
+
+        # Shuffle for variety
+        random.shuffle(articles)
+        return articles[:limit], None
     except Exception as e:
-        logger.error("Error fetching articles: %s", e)
+        import traceback
+        logger.error("Error fetching articles: %s\n%s", e, traceback.format_exc())
         return [], None
 
 
